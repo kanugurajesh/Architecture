@@ -123,69 +123,172 @@
 ## 2. RAG Pipeline Flow - Complete Request Lifecycle
 
 ```mermaid
-sequenceDiagram
-      participant U as User
-      participant UI as Streamlit UI
-      participant V as Validator
-      participant RL as Rate Limiter
-      participant C as Cache
-      participant P as RAG Pipeline
-      participant CL as Classifier
-      participant M as Memory Manager
-      participant Q as Qdrant
-      participant O as OpenAI
-      participant Met as Metrics
+  flowchart TB
+      %% Data Ingestion Layer
+      subgraph DataIngestion["📥 DATA INGESTION PIPELINE"]
+          WS[("🌐 Web Sources<br/>docs.atlan.com<br/>developer.atlan.com")]
+          FC["🔥 Firecrawl API<br/>scrape.py"]
+          MDB[("🗄️ MongoDB Atlas<br/>Raw Documents<br/>Metadata Storage")]
 
-      U->>UI: Submit Query
-      UI->>V: Validate Input
-      V->>V: Check Length/Security
-      V->>V: Sanitize Text
-      V-->>UI: Validation Result
-
-      UI->>RL: Check Rate Limit
-      RL-->>UI: Allow/Deny
-
-      UI->>CL: Classify Ticket
-      CL->>C: Check Cache
-      alt Cache Hit
-          C-->>CL: Cached Classification
-      else Cache Miss
-          CL->>O: GPT-4o Classification
-          O-->>CL: Topic/Sentiment/Priority
-          CL->>C: Store in Cache
+          WS -->|HTTP Request| FC
+          FC -->|Store Documents| MDB
       end
-      CL-->>UI: Classification
 
-      UI->>UI: Determine Response Type<br/>(RAG vs Routing)
+      %% Vector Processing Layer
+      subgraph VectorProcessing["🧬 VECTOR PROCESSING PIPELINE"]
+          direction TB
+          QI["⚙️ qdrant_ingestion.py"]
 
-      alt RAG Response
-          UI->>P: Generate RAG Response
-          P->>M: Get Conversation History
-          M-->>P: Context (last 5 exchanges)
-
-          P->>P: Enhance Query (optional)
-          P->>C: Check Search Cache
-
-          alt Search Cache Hit
-              C-->>P: Cached Results
-          else Search Cache Miss
-              P->>Q: Vector Search
-              Q-->>P: Top-K Documents
-              P->>C: Cache Results
+          subgraph Chunking["📄 Enhanced Chunking"]
+              CP["Code Preservation"]
+              RCS["RecursiveCharacterTextSplitter<br/>15+ separators"]
+              QM["Quality Metrics<br/>has_code, has_headers"]
           end
 
-          P->>O: Generate Response with Context
-          O-->>P: AI Response
-          P->>M: Store Conversation Turn
-          P-->>UI: Response + Sources
-      else Routing Response
-          UI->>UI: Generate Routing Message
-          UI-->>U: Team Routing Info
+          FE["🔢 FastEmbed<br/>BAAI/bge-small-en-v1.5<br/>384-dim vectors"]
+          QC[("🎯 Qdrant Cloud<br/>Vector Collections<br/>atlan_docs_enhanced")]
+
+          QI --> Chunking
+          Chunking --> FE
+          FE -->|Batch Upload| QC
       end
 
-      UI->>Met: Record Metrics
-      Met->>Met: Update Stats
-      UI-->>U: Display Response
+      %% RAG Query Pipeline
+      subgraph RAGPipeline["🤖 RAG QUERY PIPELINE"]
+          direction TB
+
+          subgraph Input["📝 Input Processing"]
+              UQ["User Query"]
+              IV["Input Validation<br/>validators.py"]
+              RL["Rate Limiter<br/>rate_limiter.py"]
+          end
+
+          subgraph Enhancement["🔍 Query Enhancement (Optional)"]
+              QE["GPT-4o<br/>Term Expansion"]
+              CC["Cache Check<br/>cache_manager.py"]
+          end
+
+          subgraph Search["🔎 Vector Search"]
+              QG["Query Embedding<br/>FastEmbed"]
+              VS["Qdrant Vector Search<br/>Cosine Similarity"]
+              RC["Retry Logic<br/>retry_logic.py"]
+          end
+
+          subgraph Response["💬 Response Generation"]
+              CTX["Context Assembly<br/>Top-K chunks"]
+              MEM["Conversation Memory<br/>memory_manager.py"]
+              GPT["GPT-4o Response<br/>+Citations"]
+          end
+
+          UQ --> IV
+          IV --> RL
+          RL --> QE
+          QE --> CC
+          CC --> QG
+          QG --> VS
+          VS --> RC
+          RC --> CTX
+          CTX --> MEM
+          MEM --> GPT
+      end
+
+      %% Classification Pipeline
+      subgraph Classification["🏷️ TICKET CLASSIFICATION"]
+          direction TB
+          TC["Ticket Content"]
+          CL["GPT-4o Classifier<br/>rag_pipeline.py"]
+
+          subgraph ClassOutput["Classification Output"]
+              TT["Topic Tags<br/>How-to, API, SSO, etc."]
+              ST["Sentiment<br/>Frustrated, Curious"]
+              PR["Priority<br/>P0, P1, P2"]
+          end
+
+          TC --> CL
+          CL --> ClassOutput
+      end
+
+      %% Streamlit Application Layer
+      subgraph StreamlitApp["🖥️ STREAMLIT APPLICATION"]
+          direction TB
+
+          subgraph UI["User Interface"]
+              DB["📊 Dashboard<br/>Bulk Classification"]
+              CA["💬 Chat Agent<br/>Interactive Q&A"]
+              SET["⚙️ Settings<br/>Dynamic Config"]
+              AN["📈 Analytics<br/>Metrics & Health"]
+          end
+
+          subgraph Backend["Backend Services"]
+              RAG["AtlanRAG Class<br/>rag_pipeline.py"]
+              CACHE["Multi-Level Cache<br/>Embeddings, Search,<br/>Classification, Response"]     
+              METRICS["Performance Metrics<br/>metrics.py"]
+              HEALTH["Connection Health<br/>connection_health.py"]
+          end
+
+          UI --> Backend
+      end
+
+      %% External Services
+      subgraph ExternalServices["☁️ EXTERNAL SERVICES"]
+          OAI["🤖 OpenAI GPT-4o<br/>Classification<br/>Query Enhancement<br/>Response
+  Generation"]
+          QDB[("🎯 Qdrant Cloud<br/>Vector Database<br/>gRPC Connection")]
+          MONGO[("🗄️ MongoDB Atlas<br/>Document Storage<br/>Connection Pool")]
+      end
+
+      %% Data Flow Connections
+      MDB -.->|Read Documents| QI
+      QC -.->|Vector Search| VS
+
+      RAG <-->|API Calls| OAI
+      RAG <-->|Vector Search| QDB
+
+      Backend -->|Caching| CACHE
+      Backend -->|Tracking| METRICS
+      Backend -->|Monitoring| HEALTH
+
+      RAGPipeline -->|Response| StreamlitApp
+      Classification -->|Results| StreamlitApp
+
+      %% Production Infrastructure
+      subgraph ProdInfra["🛡️ PRODUCTION INFRASTRUCTURE"]
+          direction LR
+          CM["Cache Manager<br/>1h-30min TTL"]
+          RLM["Rate Limiter<br/>Token Bucket"]
+          RET["Retry Logic<br/>Exp. Backoff"]
+          VAL["Validators<br/>Security Checks"]
+          MET["Metrics Collector<br/>Real-time Stats"]
+      end
+
+      %% Enhanced Styling with Better Contrast
+      classDef dataStore fill:#0d47a1,stroke:#fff,stroke-width:3px,color:#fff
+      classDef process fill:#1565c0,stroke:#fff,stroke-width:3px,color:#fff
+      classDef ai fill:#f57c00,stroke:#fff,stroke-width:3px,color:#fff
+      classDef ui fill:#2e7d32,stroke:#fff,stroke-width:3px,color:#fff
+      classDef infra fill:#c62828,stroke:#fff,stroke-width:3px,color:#fff
+      classDef chunking fill:#4a148c,stroke:#fff,stroke-width:3px,color:#fff
+      classDef input fill:#006064,stroke:#fff,stroke-width:3px,color:#fff
+      classDef enhancement fill:#bf360c,stroke:#fff,stroke-width:3px,color:#fff
+      classDef search fill:#004d40,stroke:#fff,stroke-width:3px,color:#fff
+      classDef response fill:#1b5e20,stroke:#fff,stroke-width:3px,color:#fff
+      classDef classOutput fill:#4a148c,stroke:#fff,stroke-width:3px,color:#fff
+      classDef uiComponents fill:#1a237e,stroke:#fff,stroke-width:3px,color:#fff
+      classDef backend fill:#311b92,stroke:#fff,stroke-width:3px,color:#fff
+
+      class MDB,QC,QDB,MONGO dataStore
+      class FC,QI,FE process
+      class OAI,QE,GPT,CL ai
+      class WS ui
+      class CM,RLM,RET,VAL,MET infra
+      class CP,RCS,QM chunking
+      class UQ,IV,RL input
+      class CC enhancement
+      class QG,VS,RC search
+      class CTX,MEM response
+      class TT,ST,PR classOutput
+      class DB,CA,SET,AN uiComponents
+      class RAG,CACHE,METRICS,HEALTH backend
 ```
 
 ##  3. Security & Input Validation Architecture
