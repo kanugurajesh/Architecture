@@ -181,9 +181,10 @@ sequenceDiagram
 
       Block --> Log
 
-      style Block fill:#ffcdd2
-      style Allow fill:#c8e6c9
-      style Log fill:#fff9c4
+      %% High-contrast colors
+      style Block fill:#e53935,color:#fff,stroke:#b71c1c,stroke-width:2px
+      style Allow fill:#43a047,color:#fff,stroke:#1b5e20,stroke-width:2px
+      style Log fill:#fbc02d,color:#000,stroke:#f57f17,stroke-width:2px
 ```
 
 ##  4. Caching Strategy - Multi-Level Architecture
@@ -240,12 +241,26 @@ graph LR
       EC --> Cost
       SC --> Cost
       CC --> Cost
+      CC --> Load
+      SC --> Load
 
-      style EC fill:#e3f2fd
-      style SC fill:#f3e5f5
-      style CC fill:#e8f5e9
-      style Cost fill:#fff3e0
-      style Speed fill:#c8e6c9
+      %% High-contrast colors
+      style EC fill:#42a5f5,color:#fff,stroke:#1e88e5,stroke-width:2px
+      style SC fill:#ab47bc,color:#fff,stroke:#8e24aa,stroke-width:2px
+      style CC fill:#66bb6a,color:#fff,stroke:#388e3c,stroke-width:2px
+
+      style Cost fill:#fb8c00,color:#fff,stroke:#ef6c00,stroke-width:2px
+      style Speed fill:#43a047,color:#fff,stroke:#2e7d32,stroke-width:2px
+      style Load fill:#26a69a,color:#fff,stroke:#00897b,stroke-width:2px
+
+      style SHA fill:#90a4ae,color:#fff,stroke:#546e7a,stroke-width:2px
+      style TTL fill:#78909c,color:#fff,stroke:#455a64,stroke-width:2px
+      style Lock fill:#607d8b,color:#fff,stroke:#37474f,stroke-width:2px
+
+      style Q1 fill:#fff176,color:#000,stroke:#fbc02d,stroke-width:2px
+      style E1 fill:#fff176,color:#000,stroke:#fbc02d,stroke-width:2px
+      style S1 fill:#fff176,color:#000,stroke:#fbc02d,stroke-width:2px
+      style C1 fill:#fff176,color:#000,stroke:#fbc02d,stroke-width:2px
 ```
 
 ##  5. Rate Limiting System
@@ -292,15 +307,21 @@ graph TB
       Deny --> Log
       Allow --> Log
 
-      style Allow fill:#c8e6c9
-      style Deny fill:#ffcdd2
-      style Log fill:#fff9c4
+      %% Improved contrast colors
+      style Allow fill:#388E3C,fontColor:#ffffff,stroke:#1B5E20
+      style Deny fill:#D32F2F,fontColor:#ffffff,stroke:#B71C1C
+      style Log fill:#FBC02D,fontColor:#000000,stroke:#F57F17
+
+      style OL fill:#90CAF9,stroke:#1565C0
+      style QL fill:#CE93D8,stroke:#6A1B9A
+      style UL fill:#A5D6A7,stroke:#2E7D32
+      style CL fill:#FFAB91,stroke:#D84315
 ```
 
 ## 6. Retry Logic & Error Handling
 
 ```mermaid
-  graph TB
+graph TB
       subgraph "Operation Types"
           O1[OpenAI Call<br/>3 retries<br/>1s base delay]
           Q1[Qdrant Call<br/>3 retries<br/>0.5s base delay]
@@ -346,39 +367,45 @@ graph TB
       Abort --> Log
       Success --> Log
 
-      style Success fill:#c8e6c9
-      style Abort fill:#ffcdd2
-      style Retry fill:#fff9c4
+      %% High contrast styles
+      style Success fill:#388E3C,fontColor:#ffffff,stroke:#1B5E20
+      style Abort fill:#D32F2F,fontColor:#ffffff,stroke:#B71C1C
+      style Retry fill:#FBC02D,fontColor:#000000,stroke:#F57F17
+      style Log fill:#1976D2,fontColor:#ffffff,stroke:#0D47A1
+
+      style Transient fill:#81D4FA,stroke:#0277BD
+      style Permanent fill:#FFAB91,stroke:#D84315
+      style Backoff fill:#CE93D8,stroke:#6A1B9A
 ```
 
 ##   7. Memory Management & Conversation Flow
 
 ```mermaid
 graph TB
-    subgraph "Session Management"
-        Create[Create Session - UUID Generation]
-        Store[Session Storage - In-Memory Dict]
-        Expire[Auto Cleanup - 60 min timeout]
+    subgraph SessionMgmt["Session Management"]
+        Create["Create Session\nUUID Generation"]
+        Store["Session Storage\nIn-Memory Dict"]
+        Expire["Auto Cleanup\n60 min timeout"]
     end
 
-    subgraph "Message Management"
+    subgraph MessageMgmt["Message Management"]
         User[User Message]
         AI[AI Response]
-        History[Chat History - LangChain InMemory]
-        Trim[Auto Trim - Max 20 messages]
+        History["Chat History\nLangChain InMemory"]
+        Trim["Auto Trim\nMax 20 messages"]
         Remove[Remove Oldest Pairs]
     end
 
-    subgraph "Context Retrieval"
+    subgraph ContextRet["Context Retrieval"]
         Get[Get Context]
-        Last5[Last 5 Exchanges - 10 messages]
-        Format[Format for Prompt - User: ... Assistant: ...]
+        Last5["Last 5 Exchanges\n10 messages"]
+        Format["Format for Prompt\nUser: ... Assistant: ..."]
     end
 
-    subgraph "Cleanup"
-        Auto[Auto Cleanup - Every 100 ops]
-        Manual[Manual Cleanup - Force Clear]
-        Stats[Cleanup Stats - Tracking]
+    subgraph Cleanup["Cleanup"]
+        Auto["Auto Cleanup\nEvery 100 ops"]
+        Manual["Manual Cleanup\nForce Clear"]
+        Stats["Cleanup Stats\nTracking"]
     end
 
     Create --> Store
@@ -398,10 +425,23 @@ graph TB
     Auto --> Stats
     Manual --> Stats
 
-    style Create fill:#e3f2fd
-    style History fill:#f3e5f5
-    style Format fill:#e8f5e9
-    style Stats fill:#fff9c4
+    %% Styles for better contrast
+    style Create fill:#42A5F5,color:#ffffff,stroke:#1565C0
+    style Store fill:#90CAF9,stroke:#1E88E5
+    style Expire fill:#64B5F6,stroke:#1976D2
+
+    style History fill:#BA68C8,color:#ffffff,stroke:#6A1B9A
+    style Trim fill:#CE93D8,stroke:#8E24AA
+    style Remove fill:#AB47BC,color:#ffffff,stroke:#4A148C
+
+    style Format fill:#81C784,color:#ffffff,stroke:#388E3C
+    style Last5 fill:#2E7D32,color:#ffffff,stroke:#1B5E20
+    style Get fill:#66BB6A,color:#ffffff,stroke:#1B5E20
+    style RAG fill:#43A047,color:#ffffff,stroke:#1B5E20
+
+    style Auto fill:#FFB74D,stroke:#EF6C00
+    style Manual fill:#FFA726,stroke:#E65100
+    style Stats fill:#FFD54F,stroke:#F57F17
 ```
 
 ## 8. Metrics Collection & Monitoring
@@ -461,250 +501,320 @@ graph TB
       JSON --> Logs
       JSON --> Dashboard
 
-      style QM fill:#e3f2fd
-      style Cost fill:#fff3e0
-      style Dashboard fill:#c8e6c9
+      %% Improved color contrast
+      style QM fill:#42A5F5,fontColor:#ffffff,stroke:#1565C0
+      style CM fill:#64B5F6,fontColor:#000000,stroke:#1E88E5
+      style PM fill:#1E88E5,fontColor:#ffffff,stroke:#0D47A1
+      style Cost fill:#FFB74D,fontColor:#000000,stroke:#EF6C00
+      style Record fill:#CE93D8,fontColor:#000000,stroke:#8E24AA
+      style Aggregate fill:#9C27B0,fontColor:#ffffff,stroke:#6A1B9A
+      style HitRate fill:#81C784,fontColor:#ffffff,stroke:#388E3C
+      style ErrorRate fill:#E57373,fontColor:#ffffff,stroke:#D32F2F
+      style AvgTime fill:#64B5F6,fontColor:#000000,stroke:#1976D2
+      style TokenCost fill:#FFD54F,fontColor:#000000,stroke:#F57F17
+      style JSON fill:#FFF59D,fontColor:#000000,stroke:#FBC02D
+      style Logs fill:#90A4AE,fontColor:#ffffff,stroke:#607D8B
+      style Dashboard fill:#81C784,fontColor:#ffffff,stroke:#388E3C
 ```
 
 ##   9. Data Pipeline - Scraping to Vector Storage
 
 ```mermaid
 graph LR
-      subgraph "Data Sources"
-          D1[docs.atlan.com<br/>~1078 pages]
-          D2[developer.atlan.com<br/>~611 pages]
-      end
-
-      subgraph "Scraping Layer"
-          F[Firecrawl API<br/>Rate Limited]
-          Extract[Content Extraction<br/>Markdown + Metadata]
-          M[MongoDB Storage<br/>Raw Documents]
-      end
-
-      subgraph "Processing"
-          Read[Read from MongoDB]
-          Mode{Ingestion Mode}
-          Inc[Incremental<br/>Timestamp-based<br/>~0.1s]
-          Full[Full Reindex<br/>Scroll-based<br/>Weekly]
-      end
-
-      subgraph "Chunking"
-          Split[Enhanced Splitting<br/>1200 tokens<br/>200 overlap]
-          Code[Code Block<br/>Preservation]
-          Quality[Quality Metrics<br/>Code/Headers/Words]
-      end
-
-      subgraph "Vectorization"
-          Embed[FastEmbed BGE<br/>384 dimensions]
-          Batch[Batch Processing<br/>50 chunks/batch]
-          Q[Qdrant Upload<br/>Vector + Payload]
-      end
-
-      D1 --> F
-      D2 --> F
-      F --> Extract
-      Extract --> M
-
-      M --> Read
-      Read --> Mode
-      Mode --> Inc
-      Mode --> Full
-
-      Inc --> Split
-      Full --> Split
-
-      Split --> Code
-      Code --> Quality
-      Quality --> Embed
-
-      Embed --> Batch
-      Batch --> Q
-
-      style F fill:#fff3e0
-      style M fill:#e8f5e9
-      style Embed fill:#e3f2fd
-      style Q fill:#f3e5f5
+    subgraph DataSources["Data Sources"]
+        D1["docs.atlan.com\n~1078 pages"]
+        D2["developer.atlan.com\n~611 pages"]
+    end
+    subgraph ScrapingLayer["Scraping Layer"]
+        F["Firecrawl API\nRate Limited"]
+        Extract["Content Extraction\nMarkdown + Metadata"]
+        M["MongoDB Storage\nRaw Documents"]
+    end
+    subgraph Processing["Processing"]
+        Read[Read from MongoDB]
+        Mode{Ingestion Mode}
+        Inc["Incremental\nTimestamp-based\n~0.1s"]
+        Full["Full Reindex\nScroll-based\nWeekly"]
+    end
+    subgraph Chunking["Chunking"]
+        Split["Enhanced Splitting\n1200 tokens\n200 overlap"]
+        Code["Code Block\nPreservation"]
+        Quality["Quality Metrics\nCode/Headers/Words"]
+    end
+    subgraph Vectorization["Vectorization"]
+        Embed["FastEmbed BGE\n384 dimensions"]
+        Batch["Batch Processing\n50 chunks/batch"]
+        Q["Qdrant Upload\nVector + Payload"]
+    end
+    D1 --> F
+    D2 --> F
+    F --> Extract
+    Extract --> M
+    M --> Read
+    Read --> Mode
+    Mode --> Inc
+    Mode --> Full
+    Inc --> Split
+    Full --> Split
+    Split --> Code
+    Code --> Quality
+    Quality --> Embed
+    Embed --> Batch
+    Batch --> Q
+    
+    %% Improved colors for maximum contrast and visibility
+    style D1 fill:#1976D2,color:#ffffff,stroke:#0D47A1,stroke-width:3px
+    style D2 fill:#1976D2,color:#ffffff,stroke:#0D47A1,stroke-width:3px
+    
+    style F fill:#F57C00,color:#ffffff,stroke:#E65100,stroke-width:3px
+    style Extract fill:#FB8C00,color:#ffffff,stroke:#E65100,stroke-width:3px
+    style M fill:#388E3C,color:#ffffff,stroke:#1B5E20,stroke-width:3px
+    
+    style Read fill:#43A047,color:#ffffff,stroke:#2E7D32,stroke-width:3px
+    style Mode fill:#F9A825,color:#000000,stroke:#F57F17,stroke-width:3px
+    style Inc fill:#FBC02D,color:#000000,stroke:#F57F17,stroke-width:3px
+    style Full fill:#FDD835,color:#000000,stroke:#F57F17,stroke-width:3px
+    
+    style Split fill:#0288D1,color:#ffffff,stroke:#01579B,stroke-width:3px
+    style Code fill:#0277BD,color:#ffffff,stroke:#01579B,stroke-width:3px
+    style Quality fill:#01579B,color:#ffffff,stroke:#004D40,stroke-width:3px
+    
+    style Embed fill:#7B1FA2,color:#ffffff,stroke:#4A148C,stroke-width:3px
+    style Batch fill:#6A1B9A,color:#ffffff,stroke:#4A148C,stroke-width:3px
+    style Q fill:#8E24AA,color:#ffffff,stroke:#4A148C,stroke-width:3px
 ```
 
 ##  10. Classification & Routing Logic
 
 ```mermaid
 graph TB
-      subgraph "Input"
-          Ticket[Support Ticket<br/>Subject + Body]
-      end
+    subgraph Input["Input"]
+        Ticket["Support Ticket\nSubject + Body"]
+    end
 
-      subgraph "Classification"
-          GPT[GPT-4o Classifier<br/>Temp: 0.1]
-          Topics[Topic Tags<br/>9 Categories]
-          Sentiment[Sentiment<br/>4 Types]
-          Priority[Priority<br/>P0/P1/P2]
-      end
+    subgraph Classification["Classification"]
+        GPT["GPT-4o Classifier\nTemp: 0.1"]
+        Topics["Topic Tags\n9 Categories"]
+        Sentiment["Sentiment\n4 Types"]
+        Priority["Priority\nP0/P1/P2"]
+    end
 
-      subgraph "Topic Categories"
-          T1[How-to]
-          T2[Product]
-          T3[Connector]
-          T4[Lineage]
-          T5[API/SDK]
-          T6[SSO]
-          T7[Glossary]
-          T8[Best Practices]
-          T9[Sensitive Data]
-      end
+    subgraph TopicCategories["Topic Categories"]
+        T1[How-to]
+        T2[Product]
+        T3[Connector]
+        T4[Lineage]
+        T5[API/SDK]
+        T6[SSO]
+        T7[Glossary]
+        T8[Best Practices]
+        T9[Sensitive Data]
+    end
 
-      subgraph "Routing Decision"
-          Check{Topic in<br/>RAG List?}
-          RAG[RAG Pipeline<br/>AI Response]
-          Route[Team Routing<br/>Reference ID]
-      end
+    subgraph RoutingDecision["Routing Decision"]
+        Check{"Topic in\nRAG List?"}
+        RAG["RAG Pipeline\nAI Response"]
+        Route["Team Routing\nReference ID"]
+    end
 
-      subgraph "RAG Topics Default"
-          R1[How-to]
-          R2[Product]
-          R3[Best Practices]
-          R4[API/SDK]
-          R5[SSO]
-      end
+    subgraph RAGTopicsDefault["RAG Topics Default"]
+        R1[How-to]
+        R2[Product]
+        R3[Best Practices]
+        R4[API/SDK]
+        R5[SSO]
+    end
 
-      Ticket --> GPT
-      GPT --> Topics
-      GPT --> Sentiment
-      GPT --> Priority
+    Ticket --> GPT
+    GPT --> Topics
+    GPT --> Sentiment
+    GPT --> Priority
 
-      Topics --> T1 & T2 & T3 & T4 & T5 & T6 & T7 & T8 & T9
+    Topics --> T1 & T2 & T3 & T4 & T5 & T6 & T7 & T8 & T9
 
-      T1 --> Check
-      T2 --> Check
-      T3 --> Check
-      T4 --> Check
-      T5 --> Check
-      T6 --> Check
-      T7 --> Check
-      T8 --> Check
-      T9 --> Check
+    T1 --> Check
+    T2 --> Check
+    T3 --> Check
+    T4 --> Check
+    T5 --> Check
+    T6 --> Check
+    T7 --> Check
+    T8 --> Check
+    T9 --> Check
 
-      Check --> |Match| RAG
-      Check --> |No Match| Route
+    Check --> |Match| RAG
+    Check --> |No Match| Route
 
-      R1 & R2 & R3 & R4 & R5 -.->|RAG Topics| Check
+    R1 & R2 & R3 & R4 & R5 -.->|RAG Topics| Check
 
-      style RAG fill:#c8e6c9
-      style Route fill:#fff9c4
-      style GPT fill:#e3f2fd
+    style Ticket fill:#1976D2,color:#ffffff,stroke:#0D47A1,stroke-width:3px
+    style GPT fill:#1E88E5,color:#ffffff,stroke:#0D47A1,stroke-width:3px
+    style Topics fill:#42A5F5,color:#ffffff,stroke:#1565C0,stroke-width:3px
+    style Sentiment fill:#42A5F5,color:#ffffff,stroke:#1565C0,stroke-width:3px
+    style Priority fill:#42A5F5,color:#ffffff,stroke:#1565C0,stroke-width:3px
+    
+    style T1 fill:#7B1FA2,color:#ffffff,stroke:#4A148C,stroke-width:2px
+    style T2 fill:#7B1FA2,color:#ffffff,stroke:#4A148C,stroke-width:2px
+    style T3 fill:#7B1FA2,color:#ffffff,stroke:#4A148C,stroke-width:2px
+    style T4 fill:#7B1FA2,color:#ffffff,stroke:#4A148C,stroke-width:2px
+    style T5 fill:#7B1FA2,color:#ffffff,stroke:#4A148C,stroke-width:2px
+    style T6 fill:#7B1FA2,color:#ffffff,stroke:#4A148C,stroke-width:2px
+    style T7 fill:#7B1FA2,color:#ffffff,stroke:#4A148C,stroke-width:2px
+    style T8 fill:#7B1FA2,color:#ffffff,stroke:#4A148C,stroke-width:2px
+    style T9 fill:#7B1FA2,color:#ffffff,stroke:#4A148C,stroke-width:2px
+    
+    style Check fill:#F9A825,color:#000000,stroke:#F57F17,stroke-width:3px
+    style RAG fill:#2E7D32,color:#ffffff,stroke:#1B5E20,stroke-width:3px
+    style Route fill:#FBC02D,color:#000000,stroke:#F57F17,stroke-width:3px
+    
+    style R1 fill:#43A047,color:#ffffff,stroke:#2E7D32,stroke-width:2px
+    style R2 fill:#43A047,color:#ffffff,stroke:#2E7D32,stroke-width:2px
+    style R3 fill:#43A047,color:#ffffff,stroke:#2E7D32,stroke-width:2px
+    style R4 fill:#43A047,color:#ffffff,stroke:#2E7D32,stroke-width:2px
+    style R5 fill:#43A047,color:#ffffff,stroke:#2E7D32,stroke-width:2px
 ```
 
 ##  11. Settings & Configuration Management
 
 ```mermaid
 graph TB
-      subgraph "Settings UI"
-          UI[Settings Page<br/>Streamlit Tabs]
-          Search[Search Settings<br/>Collection/Top-K/Threshold]
-          Model[Model Settings<br/>LLM/Temp/Tokens]
-          Features[Feature Toggles<br/>Query Enhancement]
-          Routing[RAG Topics Config<br/>Multi-select]
-          UISet[UI Preferences<br/>Show Analysis]
-      end
+    subgraph SettingsUI["Settings UI"]
+        UI["Settings Page\nStreamlit Tabs"]
+        Search["Search Settings\nCollection/Top-K/Threshold"]
+        Model["Model Settings\nLLM/Temp/Tokens"]
+        Features["Feature Toggles\nQuery Enhancement"]
+        Routing["RAG Topics Config\nMulti-select"]
+        UISet["UI Preferences\nShow Analysis"]
+    end
 
-      subgraph "Validation"
-          Pydantic[Pydantic Validation<br/>Type Safety]
-          Ranges[Range Checks<br/>Min/Max Values]
-          Warnings[Warning System<br/>Config Issues]
-      end
+    subgraph Validation["Validation"]
+        Pydantic["Pydantic Validation\nType Safety"]
+        Ranges["Range Checks\nMin/Max Values"]
+        Warnings["Warning System\nConfig Issues"]
+    end
 
-      subgraph "Application"
-          Session[Session State<br/>Streamlit]
-          Pipeline[RAG Pipeline<br/>Settings Update]
-          Apply[Dynamic Apply<br/>No Restart]
-      end
+    subgraph Application["Application"]
+        Session["Session State\nStreamlit"]
+        Pipeline["RAG Pipeline\nSettings Update"]
+        Apply["Dynamic Apply\nNo Restart"]
+    end
 
-      subgraph "Persistence"
-          Export[Export JSON<br/>Backup Config]
-          Import[Import JSON<br/>Restore Config]
-          Defaults[Reset to Defaults]
-      end
+    subgraph Persistence["Persistence"]
+        Export["Export JSON\nBackup Config"]
+        Import["Import JSON\nRestore Config"]
+        Defaults[Reset to Defaults]
+    end
 
-      UI --> Search
-      UI --> Model
-      UI --> Features
-      UI --> Routing
-      UI --> UISet
+    UI --> Search
+    UI --> Model
+    UI --> Features
+    UI --> Routing
+    UI --> UISet
 
-      Search --> Pydantic
-      Model --> Pydantic
-      Features --> Pydantic
+    Search --> Pydantic
+    Model --> Pydantic
+    Features --> Pydantic
 
-      Pydantic --> Ranges
-      Ranges --> Warnings
+    Pydantic --> Ranges
+    Ranges --> Warnings
 
-      Warnings --> Session
-      Session --> Pipeline
-      Pipeline --> Apply
+    Warnings --> Session
+    Session --> Pipeline
+    Pipeline --> Apply
 
-      Session --> Export
-      Import --> Session
-      Defaults --> Session
+    Session --> Export
+    Import --> Session
+    Defaults --> Session
 
-      style Pydantic fill:#e3f2fd
-      style Apply fill:#c8e6c9
-      style Warnings fill:#fff9c4
+    style UI fill:#1976D2,color:#ffffff,stroke:#0D47A1,stroke-width:3px
+    style Search fill:#42A5F5,color:#ffffff,stroke:#1565C0,stroke-width:2px
+    style Model fill:#42A5F5,color:#ffffff,stroke:#1565C0,stroke-width:2px
+    style Features fill:#42A5F5,color:#ffffff,stroke:#1565C0,stroke-width:2px
+    style Routing fill:#42A5F5,color:#ffffff,stroke:#1565C0,stroke-width:2px
+    style UISet fill:#42A5F5,color:#ffffff,stroke:#1565C0,stroke-width:2px
+    
+    style Pydantic fill:#1E88E5,color:#ffffff,stroke:#0D47A1,stroke-width:3px
+    style Ranges fill:#42A5F5,color:#ffffff,stroke:#1565C0,stroke-width:2px
+    style Warnings fill:#F9A825,color:#000000,stroke:#F57F17,stroke-width:3px
+    
+    style Session fill:#7B1FA2,color:#ffffff,stroke:#4A148C,stroke-width:2px
+    style Pipeline fill:#7B1FA2,color:#ffffff,stroke:#4A148C,stroke-width:2px
+    style Apply fill:#2E7D32,color:#ffffff,stroke:#1B5E20,stroke-width:3px
+    
+    style Export fill:#00796B,color:#ffffff,stroke:#004D40,stroke-width:2px
+    style Import fill:#00796B,color:#ffffff,stroke:#004D40,stroke-width:2px
+    style Defaults fill:#00796B,color:#ffffff,stroke:#004D40,stroke-width:2px
 ```
 
 ##   12. Connection Pool & Resource Management
 
 ```mermaid
 graph TB
-      subgraph "HTTP Client - OpenAI"
-          HTTP[HTTPX Client<br/>Connection Pooling]
-          MaxConn[Max Connections: 20]
-          KeepAlive[Keep-Alive: 5]
-          Timeout[Timeout: 30s]
-      end
+    subgraph HTTPClient["HTTP Client - OpenAI"]
+        HTTP["HTTPX Client\nConnection Pooling"]
+        MaxConn[Max Connections: 20]
+        KeepAlive[Keep-Alive: 5]
+        Timeout[Timeout: 30s]
+    end
 
-      subgraph "Qdrant Client"
-          GRPC[gRPC Options]
-          MaxMsg[Max Message: 100MB]
-          KeepAliveQ[Keep-Alive: 30s]
-          TimeoutQ[Timeout: 10s]
-      end
+    subgraph QdrantClient["Qdrant Client"]
+        GRPC[gRPC Options]
+        MaxMsg[Max Message: 100MB]
+        KeepAliveQ[Keep-Alive: 30s]
+        TimeoutQ[Timeout: 10s]
+    end
 
-      subgraph "MongoDB Client"
-          Mongo[PyMongo MongoClient]
-          AutoPool[Auto Connection Pool<br/>✅ Default: 100 connections]
-          ThreadSafe[Thread-Safe<br/>✅ Automatic]
-          Reuse[Connection Reuse<br/>✅ Built-in]
-      end
+    subgraph MongoDBClient["MongoDB Client"]
+        Mongo[PyMongo MongoClient]
+        AutoPool["Auto Connection Pool\n✅ Default: 100 connections"]
+        ThreadSafe["Thread-Safe\n✅ Automatic"]
+        Reuse["Connection Reuse\n✅ Built-in"]
+    end
 
-      subgraph "Monitoring"
-          Track[Connection Tracking]
-          Slow[Slow Operation Detection<br/>>5s threshold]
-          Errors[Connection Errors<br/>Logging]
-          Metrics[Pool Metrics<br/>Utilization/Wait Time]
-      end
+    subgraph Monitoring["Monitoring"]
+        Track[Connection Tracking]
+        Slow["Slow Operation Detection\n>5s threshold"]
+        Errors["Connection Errors\nLogging"]
+        Metrics["Pool Metrics\nUtilization/Wait Time"]
+    end
 
-      HTTP --> MaxConn
-      MaxConn --> KeepAlive
-      KeepAlive --> Timeout
+    HTTP --> MaxConn
+    MaxConn --> KeepAlive
+    KeepAlive --> Timeout
 
-      GRPC --> MaxMsg
-      MaxMsg --> KeepAliveQ
-      KeepAliveQ --> TimeoutQ
+    GRPC --> MaxMsg
+    MaxMsg --> KeepAliveQ
+    KeepAliveQ --> TimeoutQ
 
-      Mongo --> AutoPool
-      AutoPool --> ThreadSafe
-      ThreadSafe --> Reuse
+    Mongo --> AutoPool
+    AutoPool --> ThreadSafe
+    ThreadSafe --> Reuse
 
-      HTTP --> Track
-      GRPC --> Track
-      Mongo --> Track
+    HTTP --> Track
+    GRPC --> Track
+    Mongo --> Track
 
-      Track --> Slow
-      Track --> Errors
-      Track --> Metrics
+    Track --> Slow
+    Track --> Errors
+    Track --> Metrics
 
-      style HTTP fill:#e3f2fd
-      style GRPC fill:#f3e5f5
-      style AutoPool fill:#c8e6c9
-      style Metrics fill:#c8e6c9
+    style HTTP fill:#1E88E5,color:#ffffff,stroke:#0D47A1,stroke-width:3px
+    style MaxConn fill:#42A5F5,color:#ffffff,stroke:#1565C0,stroke-width:2px
+    style KeepAlive fill:#42A5F5,color:#ffffff,stroke:#1565C0,stroke-width:2px
+    style Timeout fill:#42A5F5,color:#ffffff,stroke:#1565C0,stroke-width:2px
+    
+    style GRPC fill:#7B1FA2,color:#ffffff,stroke:#4A148C,stroke-width:3px
+    style MaxMsg fill:#9C27B0,color:#ffffff,stroke:#6A1B9A,stroke-width:2px
+    style KeepAliveQ fill:#9C27B0,color:#ffffff,stroke:#6A1B9A,stroke-width:2px
+    style TimeoutQ fill:#9C27B0,color:#ffffff,stroke:#6A1B9A,stroke-width:2px
+    
+    style Mongo fill:#2E7D32,color:#ffffff,stroke:#1B5E20,stroke-width:3px
+    style AutoPool fill:#388E3C,color:#ffffff,stroke:#2E7D32,stroke-width:2px
+    style ThreadSafe fill:#388E3C,color:#ffffff,stroke:#2E7D32,stroke-width:2px
+    style Reuse fill:#388E3C,color:#ffffff,stroke:#2E7D32,stroke-width:2px
+    
+    style Track fill:#D32F2F,color:#ffffff,stroke:#B71C1C,stroke-width:3px
+    style Slow fill:#F44336,color:#ffffff,stroke:#C62828,stroke-width:2px
+    style Errors fill:#F44336,color:#ffffff,stroke:#C62828,stroke-width:2px
+    style Metrics fill:#388E3C,color:#ffffff,stroke:#2E7D32,stroke-width:2px
 ```
