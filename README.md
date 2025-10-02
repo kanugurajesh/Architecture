@@ -3,62 +3,121 @@
 ##  1. High-Level System Architecture
 
 ```mermaid
-graph TB
+  graph TB
       subgraph "Client Layer"
           User[👤 User Browser]
-          UI[Streamlit UI]
+          UI[Streamlit UI<br/>main.py]
       end
 
-      subgraph "Application Layer"
-          Main[main.py<br/>Streamlit App]
-          Pipeline[rag_pipeline.py<br/>RAG Engine]
-          Classifier[TicketClassifier]
-          Memory[ConversationMemoryManager]
+      subgraph "Application Core - RAGPipeline"
+          Pipeline[RAGPipeline<br/>Orchestrator]
+          RAG[AtlanRAG<br/>Query Processing]
+          Classifier[TicketClassifier<br/>Ticket Classification]
+          Memory[ConversationMemoryManager<br/>LangChain InMemory]
       end
 
-      subgraph "Production Features"
-          RateLimit[Rate Limiter<br/>Multi-tier]
-          Cache[Cache Manager<br/>TTL-based]
+      subgraph "Production Features Layer"
+          Validator[Input Validator<br/>Security & Sanitization]
+          RateLimit[Rate Limiter<br/>Token Bucket Algorithm]
+          Cache[Cache Manager<br/>3-Tier TTL Cache]
           Retry[Retry Logic<br/>Exponential Backoff]
-          Metrics[Metrics Collector<br/>Performance Tracking]
-          Validator[Input Validator<br/>Security]
+          Metrics[Metrics Collector<br/>Query & Connection Tracking]
+          Health[Connection Health<br/>Service Monitoring]
       end
 
-      subgraph "External Services"
-          OpenAI[OpenAI GPT-4o<br/>Classification & RAG]
-          Qdrant[Qdrant Cloud<br/>Vector DB]
-          MongoDB[MongoDB Atlas<br/>Document Store]
+      subgraph "External AI Services"
+          OpenAI[OpenAI GPT-4o<br/>Classification & Generation<br/>httpx Connection Pool]
+          Embed[FastEmbed<br/>BAAI/bge-small-en-v1.5<br/>Local Embedding]
       end
 
-      subgraph "Data Pipeline"
-          Scraper[scrape.py<br/>Firecrawl API]
-          Ingestion[qdrant_ingestion.py<br/>Vector Processing]
+      subgraph "Vector & Storage Services"
+          Qdrant[Qdrant Cloud<br/>Vector Database<br/>gRPC Connection Pool]
+          MongoDB[MongoDB Atlas<br/>Document Store<br/>Scraped Content]
       end
 
+      subgraph "Data Pipeline Layer"
+          Scraper[scrape.py<br/>Firecrawl API<br/>Web Scraping]
+          Ingestion[qdrant_ingestion.py<br/>Text Splitting & Vectorization]
+          Utils[utils.py<br/>MongoDB Helper]
+      end
+
+      subgraph "Singleton Managers"
+          GM[get_memory_manager]
+          GC[get_cache]
+          GR[get_rate_limiter]
+          GMC[get_metrics_collector]
+      end
+
+      %% User Flow
       User --> UI
-      UI --> Main
-      Main --> Validator
-      Main --> Pipeline
-      Main --> Classifier
-      Main --> Memory
+      UI --> Validator
+      Validator --> Pipeline
 
-      Pipeline --> RateLimit
-      Pipeline --> Cache
-      Pipeline --> Retry
-      Pipeline --> Metrics
+      %% Pipeline Orchestration
+      Pipeline --> RAG
+      Pipeline --> Classifier
+      Pipeline --> Memory
 
+      %% RAG Component Flow
+      RAG --> RateLimit
+      RAG --> Cache
+      RAG --> Retry
+      RAG --> Metrics
+
+      %% Classifier Flow
+      Classifier --> RateLimit
+      Classifier --> Cache
+
+      %% External Service Connections
       RateLimit --> OpenAI
-      Pipeline --> Qdrant
-      Classifier --> OpenAI
+      RAG --> Embed
+      Retry --> Qdrant
+      Health --> Qdrant
+      Health --> OpenAI
 
-      Scraper --> MongoDB
+      %% Data Pipeline Flow
+      Scraper --> Utils
+      Utils --> MongoDB
       MongoDB --> Ingestion
-      Ingestion --> Qdrant
+      Ingestion --> Embed
+      Embed --> Qdrant
 
-      style User fill:#42a5f5,stroke:#0d47a1,stroke-width:2px
-      style OpenAI fill:#ffb74d,stroke:#e65100,stroke-width:2px
-      style Qdrant fill:#ce93d8,stroke:#6a1b9a,stroke-width:2px
-      style MongoDB fill:#81c784,stroke:#2e7d32,stroke-width:2px
+      %% Singleton Access
+      Pipeline --> GM
+      Pipeline --> GC
+      RAG --> GR
+      RAG --> GMC
+
+      %% Styling
+      style User fill:#42a5f5,stroke:#0d47a1,stroke-width:3px,color:#fff
+      style UI fill:#1e88e5,stroke:#0d47a1,stroke-width:2px,color:#fff
+
+      style Pipeline fill:#7b1fa2,stroke:#4a148c,stroke-width:3px,color:#fff
+      style RAG fill:#8e24aa,stroke:#4a148c,stroke-width:2px,color:#fff
+      style Classifier fill:#8e24aa,stroke:#4a148c,stroke-width:2px,color:#fff
+      style Memory fill:#8e24aa,stroke:#4a148c,stroke-width:2px,color:#fff
+
+      style Validator fill:#ef6c00,stroke:#bf360c,stroke-width:2px,color:#fff
+      style RateLimit fill:#f57c00,stroke:#bf360c,stroke-width:2px,color:#fff
+      style Cache fill:#f57c00,stroke:#bf360c,stroke-width:2px,color:#fff
+      style Retry fill:#f57c00,stroke:#bf360c,stroke-width:2px,color:#fff
+      style Metrics fill:#f57c00,stroke:#bf360c,stroke-width:2px,color:#fff
+      style Health fill:#f57c00,stroke:#bf360c,stroke-width:2px,color:#fff
+
+      style OpenAI fill:#ff6f00,stroke:#e65100,stroke-width:3px,color:#fff
+      style Embed fill:#ffa726,stroke:#e65100,stroke-width:2px,color:#fff
+
+      style Qdrant fill:#ab47bc,stroke:#6a1b9a,stroke-width:3px,color:#fff
+      style MongoDB fill:#66bb6a,stroke:#2e7d32,stroke-width:3px,color:#fff
+
+      style Scraper fill:#26a69a,stroke:#00695c,stroke-width:2px,color:#fff
+      style Ingestion fill:#26a69a,stroke:#00695c,stroke-width:2px,color:#fff
+      style Utils fill:#4db6ac,stroke:#00695c,stroke-width:2px,color:#fff
+
+      style GM fill:#78909c,stroke:#455a64,stroke-width:2px,color:#fff
+      style GC fill:#78909c,stroke:#455a64,stroke-width:2px,color:#fff
+      style GR fill:#78909c,stroke:#455a64,stroke-width:2px,color:#fff
+      style GMC fill:#78909c,stroke:#455a64,stroke-width:2px,color:#fff
 ```
 
 ## 2. RAG Pipeline Flow - Complete Request Lifecycle
@@ -190,77 +249,96 @@ sequenceDiagram
 ##  4. Caching Strategy - Multi-Level Architecture
 
 ```mermaid
-graph LR
-      subgraph "Cache Layers"
-          EC[Embedding Cache<br/>1000 items<br/>TTL: 1 hour]
-          SC[Search Cache<br/>500 items<br/>TTL: 30 min]
-          CC[Classification Cache<br/>500 items<br/>TTL: 1 hour]
+graph TB
+      subgraph "Entry Point"
+          User[User Query/Request]
       end
 
-      subgraph "Operations"
-          Q1[Query Request]
-          E1[Embedding Generation]
-          S1[Search Request]
-          C1[Classification Request]
+      subgraph "RAG Pipeline Operations"
+          Classify[Classify Ticket<br/>OpenAI API]
+          Search[Search Qdrant<br/>Vector Search]
+          Generate[Generate Response<br/>OpenAI API]
       end
 
-      subgraph "Storage"
-          SHA[SHA-256 Hash Keys]
-          TTL[TTL Expiration]
-          Lock[Thread-Safe Locks]
+      subgraph "Cache Layer - RAGCache Singleton"
+          CC[Classification Cache<br/>TTLCache<br/>500 items, 3600s TTL]
+          SC[Search Cache<br/>TTLCache<br/>500 items, 1800s TTL]
+          RC[Response Cache<br/>TTLCache<br/>500 items, 3600s TTL]
+      end
+
+      subgraph "Cache Key Generation"
+          SHA1[SHA-256 Hash<br/>ticket text]
+          SHA2[SHA-256 Hash<br/>query + top_k + score + collection]
+          SHA3[SHA-256 Hash<br/>query + context_hash]
+      end
+
+      subgraph "Thread Safety"
+          Lock1[Classification Lock]
+          Lock2[Search Lock]
+          Lock3[Response Lock]
+      end
+
+      subgraph "Cache Statistics"
+          Stats[Hit/Miss Tracking<br/>Size Monitoring<br/>Hit Rate Calculation]
       end
 
       subgraph "Benefits"
-          Cost[Cost Reduction<br/>Save API Calls]
-          Speed[Performance<br/>Sub-ms Response]
-          Load[Load Reduction<br/>Decrease Traffic]
+          Cost[💰 Cost Reduction<br/>Reduce OpenAI API Calls]
+          Speed[⚡ Performance<br/>Instant Cache Response]
+          Load[📉 Load Reduction<br/>Lower Qdrant Traffic]
       end
 
-      Q1 --> E1
-      E1 --> EC
-      EC --> |Hit| Speed
-      EC --> |Miss| E1
+      User --> Classify
+      User --> Search
+      User --> Generate
 
-      Q1 --> S1
-      S1 --> SC
-      SC --> |Hit| Speed
-      SC --> |Miss| S1
+      Classify --> SHA1
+      Search --> SHA2
+      Generate --> SHA3
 
-      Q1 --> C1
-      C1 --> CC
-      CC --> |Hit| Speed
-      CC --> |Miss| C1
+      SHA1 --> CC
+      SHA2 --> SC
+      SHA3 --> RC
 
-      EC --> SHA
-      SC --> SHA
-      CC --> SHA
+      CC --> Lock1
+      SC --> Lock2
+      RC --> Lock3
 
-      SHA --> TTL
-      TTL --> Lock
+      Lock1 --> Stats
+      Lock2 --> Stats
+      Lock3 --> Stats
 
-      EC --> Cost
-      SC --> Cost
-      CC --> Cost
-      CC --> Load
-      SC --> Load
+      CC -->|Cache Hit| Speed
+      SC -->|Cache Hit| Speed
+      RC -->|Cache Hit| Speed
 
-      %% High-contrast colors
-      style EC fill:#42a5f5,color:#fff,stroke:#1e88e5,stroke-width:2px
-      style SC fill:#ab47bc,color:#fff,stroke:#8e24aa,stroke-width:2px
-      style CC fill:#66bb6a,color:#fff,stroke:#388e3c,stroke-width:2px
+      CC -->|Reduce Calls| Cost
+      RC -->|Reduce Calls| Cost
+      SC -->|Reduce Queries| Load
 
-      style Cost fill:#fb8c00,color:#fff,stroke:#ef6c00,stroke-width:2px
-      style Speed fill:#43a047,color:#fff,stroke:#2e7d32,stroke-width:2px
-      style Load fill:#26a69a,color:#fff,stroke:#00897b,stroke-width:2px
+      %% Styling
+      style CC fill:#66bb6a,color:#fff,stroke:#388e3c,stroke-width:3px
+      style SC fill:#ab47bc,color:#fff,stroke:#8e24aa,stroke-width:3px
+      style RC fill:#42a5f5,color:#fff,stroke:#1e88e5,stroke-width:3px
 
-      style SHA fill:#90a4ae,color:#fff,stroke:#546e7a,stroke-width:2px
-      style TTL fill:#78909c,color:#fff,stroke:#455a64,stroke-width:2px
-      style Lock fill:#607d8b,color:#fff,stroke:#37474f,stroke-width:2px
+      style Classify fill:#ffa726,color:#fff,stroke:#f57c00,stroke-width:2px
+      style Search fill:#ffa726,color:#fff,stroke:#f57c00,stroke-width:2px
+      style Generate fill:#ffa726,color:#fff,stroke:#f57c00,stroke-width:2px
 
-      style Q1 fill:#fff176,color:#000,stroke:#fbc02d,stroke-width:2px
-      style E1 fill:#fff176,color:#000,stroke:#fbc02d,stroke-width:2px
-      style S1 fill:#fff176,color:#000,stroke:#fbc02d,stroke-width:2px
-      style C1 fill:#fff176,color:#000,stroke:#fbc02d,stroke-width:2px
+      style SHA1 fill:#78909c,color:#fff,stroke:#546e7a,stroke-width:2px
+      style SHA2 fill:#78909c,color:#fff,stroke:#546e7a,stroke-width:2px
+      style SHA3 fill:#78909c,color:#fff,stroke:#546e7a,stroke-width:2px
+
+      style Lock1 fill:#607d8b,color:#fff,stroke:#455a64,stroke-width:2px
+      style Lock2 fill:#607d8b,color:#fff,stroke:#455a64,stroke-width:2px
+      style Lock3 fill:#607d8b,color:#fff,stroke:#455a64,stroke-width:2px
+
+      style Cost fill:#ef5350,color:#fff,stroke:#c62828,stroke-width:2px
+      style Speed fill:#66bb6a,color:#fff,stroke:#2e7d32,stroke-width:2px
+      style Load fill:#29b6f6,color:#fff,stroke:#0277bd,stroke-width:2px
+
+      style User fill:#fff176,color:#000,stroke:#f9a825,stroke-width:3px
+      style Stats fill:#90a4ae,color:#fff,stroke:#546e7a,stroke-width:2px
 ```
 
 ##  5. Rate Limiting System
