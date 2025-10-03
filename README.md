@@ -1,4 +1,4 @@
-# Assistly
+# Assistly Architectures
 
 ##  1. High-Level System Architecture
 
